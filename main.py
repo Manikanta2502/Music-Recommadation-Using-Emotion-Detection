@@ -1,4 +1,3 @@
-
 import cv2
 import os
 import numpy as np
@@ -9,14 +8,11 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import random
 import tkinter as tk
-from tkinter import Label
+from tkinter import Label, OptionMenu, StringVar
 from PIL import Image, ImageTk
 import webbrowser
 
 # Load the pre-trained models
-# face_classifier = cv2.CascadeClassifier(r"Emotion_Detection_CNN-main\haarcascade_frontalface_default.xml")
-# classifier = load_model(r"Emotion_Detection_CNN-main\model.h5")
-
 face_classifier = cv2.CascadeClassifier(r"haarcascade_frontalface_default.xml")
 classifier = load_model(r"model.h5")
 
@@ -42,8 +38,17 @@ mood_to_query = {
     'Surprise': 'surprise'
 }
 
-def get_song_by_mood(mood):
-    query = mood_to_query.get(mood, 'pop')  # Default to pop if mood not found
+# Map language choices to query additions
+language_to_query = {
+    'English': '',
+    'Telugu': ' telugu',
+    'Tamil': ' tamil',
+    'Hindi': ' hindi',
+    'Malayalam': ' malayalam'
+}
+
+def get_song_by_mood_and_language(mood, language):
+    query = mood_to_query.get(mood, 'pop') + language_to_query.get(language, '')
     results = sp.search(q=query, type='track', limit=25)  # Get multiple tracks
     if results['tracks']['items']:
         track = random.choice(results['tracks']['items'])  # Randomly select a track
@@ -71,7 +76,7 @@ def update_frame():
                 # Predict emotion
                 prediction = classifier.predict(roi)[0]
                 label = emotion_labels[prediction.argmax()]
-                song_info = get_song_by_mood(label)
+                song_info = get_song_by_mood_and_language(label, selected_language.get())
                 last_update_time = current_time  # Update the last update time
 
     for (x, y, w, h) in faces:
@@ -95,32 +100,49 @@ def update_frame():
 
     lmain.after(10, update_frame)
 
-# Initialize video capture
-cap = cv2.VideoCapture(0)
+def start_main_app():
+    global root
+    # Destroy the language selection window
+    root.destroy()
+    
+    # Create and configure the main application window
+    global cap, lmain, song_label, link_label, last_update_time, label, song_info
+    root = tk.Tk()
+    root.title("Emotion Detector with Spotify Recommendations")
 
-# Create Tkinter window
+    # Create and place the labels and video panel
+    lmain = Label(root)
+    lmain.pack()
+
+    song_label = Label(root, text="", font=('Helvetica', 12))
+    song_label.pack()
+
+    link_label = Label(root, text="", font=('Helvetica', 12), fg="blue", cursor="hand2")
+    link_label.pack()
+
+    # Initialize variables
+    last_update_time = time.time()
+    label = 'Neutral'  # Default label
+    song_info = None
+
+    # Initialize video capture
+    cap = cv2.VideoCapture(0)
+
+    # Start the video loop
+    update_frame()
+    root.mainloop()
+
+# Create Tkinter root window for language selection
 root = tk.Tk()
-root.title("Emotion Detector with Spotify Recommendations")
+root.title("Select Language")
 
-# Create and place the labels and video panel
-lmain = Label(root)
-lmain.pack()
+selected_language = StringVar(value="English")
+language_options = ["English", "Telugu", "Tamil", "Hindi", "Malayalam"]
 
-song_label = Label(root, text="", font=('Helvetica', 12))
-song_label.pack()
+tk.Label(root, text="Select your preferred language:", font=('Helvetica', 12)).pack(pady=10)
+tk.OptionMenu(root, selected_language, *language_options).pack(pady=10)
 
-link_label = Label(root, text="", font=('Helvetica', 12), fg="blue", cursor="hand2")
-link_label.pack()
+tk.Button(root, text="Start", command=start_main_app).pack(pady=20)
 
-# Initialize variables
-last_update_time = time.time()
-label = 'Neutral'  # Default label
-song_info = None
-
-# Start the video loop
-update_frame()
+# Run the language selection window
 root.mainloop()
-
-# Release the capture
-cap.release()
-cv2.destroyAllWindows()
