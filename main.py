@@ -11,6 +11,10 @@ import tkinter as tk
 from tkinter import Label, OptionMenu, StringVar
 from PIL import Image, ImageTk
 import webbrowser
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Load the pre-trained models
 face_classifier = cv2.CascadeClassifier(r"haarcascade_frontalface_default.xml")
