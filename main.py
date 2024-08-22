@@ -12,6 +12,10 @@ import tkinter as tk
 from tkinter import Label
 from PIL import Image, ImageTk
 import webbrowser
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Load the pre-trained models
 # face_classifier = cv2.CascadeClassifier(r"Emotion_Detection_CNN-main\haarcascade_frontalface_default.xml")
